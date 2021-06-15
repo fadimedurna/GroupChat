@@ -27,7 +27,7 @@ public class ChatServer {
                 System.exit(1);
             }
         }
-        //Server objesi oluşturulup startServer metoduna atanır
+        //Server objesi oluşturulup runServer metoduna atanır
         ChatServer server = new ChatServer();
         server.runServer(serverPort);
     }
