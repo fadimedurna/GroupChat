@@ -179,9 +179,17 @@ public class ChatServer {
                 broadcast(serverMessage, this);       // announce the newly connected client to the online clients.
 
             } catch (SocketException e) {
-                System.out.println("Socket Connection Lost!");
+                // Handle socket disconnect (Connection reset or lost)
+                System.out.println("Socket connection lost with " + userName + ". Client disconnected.");
+                try {
+                    closeConnection();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+                return;
             } catch (IOException ex) {
                 System.out.println("Error in UserThread: " + ex.getMessage());
+                return;
             }
 
 
@@ -197,47 +205,48 @@ public class ChatServer {
 
                     if (!clientMessage.isEmpty()) {
 
-                        //private message
+                        // Private message handling
                         if (clientMessage.startsWith("@")) {
+                            // Split the message into two parts: recipient and the message
+                            String[] privateMessage = clientMessage.split(" ", 2);  // Split into 2 parts at the first space
 
-                            String[] privateMessage = clientMessage.split(" ", 2);
-                            String userTo = privateMessage[0].substring(1);
+                            // Ensure there is both a recipient and a message
+                            if (privateMessage.length > 1) {
+                                String userTo = privateMessage[0].substring(1);  // Remove '@' from the recipient's name
+                                clientMessage = privateMessage[1];  // The actual message
 
-                            if (userExists(userTo)) {
-                                clientMessage = privateMessage[1];
-                                directMessage(userTo, "(" + userName + "): " + clientMessage);
+                                // Ensure the user exists before sending the message
+                                if (userExists(userTo)) {
+                                    directMessage(userTo, "(" + userName + "): " + clientMessage);  // Send the direct message
+                                } else {
+                                    // If the user doesn't exist, you could send an error message or log it
+                                    System.out.println("User " + userTo + " does not exist.");
+                                }
+                            } else {
+                                // If the message is malformed (e.g., "@username" without a message), handle this case
+                                System.out.println("Private message format is incorrect. Usage: @username message");
                             }
-
                         } else {
-                            //broadcasting
+                            // Broadcasting message to all clients
                             server.broadcast("(" + userName + "): " + clientMessage, this);
                         }
+
                     }
 
                 } catch (IOException e) {
+                    // Catch any IO exceptions (e.g., client disconnects unexpectedly)
                     System.out.println("Receiving error on " + userName + " : " + e.getMessage());
+                    break; // Exit the loop when an error occurs
                 }
             } while (!connection.isClosed() && !clientMessage.equalsIgnoreCase("Quit"));
-
+            //Close the connection when done
             try {
                 closeConnection();
             } catch (IOException e) {
                 System.out.println("Receiving error closing... " + userName + " : " + e.getMessage());
             }
 
-            /*server.removeUser(userName, this);
-            connection.close();
-
-            serverMessage = userName + " has quitted.";
-            broadcast(serverMessage, this);*/
         }
 
-        /*void removeUser(String userName, ClientThread aUser) {
-            boolean removed = userNames.remove(userName);
-            if (removed) {
-                clientThreads.remove(aUser);
-                System.out.println("The user " + userName + " left the chat!!!");
-            }
-        }*/
     }
 }

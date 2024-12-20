@@ -143,16 +143,6 @@ public class Client {
       }
    }
 
-   /*private void sendData(String s) {
-      try // send object to server
-      {
-         output.writeObject(s);
-         output.flush(); // flush data to output
-      }
-      catch (IOException ioException)
-      {
-         System.out.println("\nError writing object");
-      }
-   }*/
+
 }
 
